@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <style>
+        body {
+            background-color: #fce4ec;
+        }
+        .container {
+            margin-top: 3%;
+        }
+        #add {
+            margin-left: 90%;
+        }
+        nav {
+            background-color: #f8bbd0;
+        }
+        #navTitle {
+            float: left;
+            margin-left: 45%;
+        }
+    </style>
+    <title>iPoem</title>
+</head>
+
+<body>
+    <center>
+        <nav class="navbar navbar-light">
+            <h1 id="navTitle">iPoem</h1>
+            <form class="form-inline my-2 my-lg-0">
+                <input class="form-control mr-sm-2" type="search" placeholder="Search a poem" aria-label="Search">
+                <button type="submit" class="btn btn-outline-danger my-2 my-sm-0">Search</button>
+            </form>
+            </div>
+        </nav>
+        <div class="container">
+            <button id="add" type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#content">
+                Add Poem
+            </button>
+            <div class="modal" id="content">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h1>iPoem</h1>
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="poemform">
+                                <span>Title</span>
+                                <input class="form-control" type="text" id='title' placeholder="Title" required><br>
+                                <span>Date</span>
+                                <input class="form-control" type="datetime" id="currentDT" placeholder="Date" readonly><br>
+                                <span>Poem</span>
+                            </form>
+                            <textarea rows="15" cols="50" name="comment" form="poemform" id="poem" placeholder="Enter poem here..."
+                                required></textarea>
+                        </div>
+                        <div class="modal-footer">
+                            <button id='submit' type="button" class="btn btn-success btn-sm" data-dismiss="modal">Submit</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal" id="updateContent" style="display: none">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h1>iPoem</h1>
+                            <button type="button" class="close" data-dismiss="modal" style="display: none">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <form>
+                                <span>Title</span>
+                                <input class="form-control" type="text" id='updateTitle' placeholder="Update Title"
+                                    required><br>
+                                <span>Date</span>
+                                <input class="form-control" type="date" id="updateDT" placeholder="currentDT" required><br>
+                                <span>Poem</span>
+                            </form>
+                            <textarea rows="15" cols="50" name="comment" form="poemform" id="ipdatePoem" placeholder="Enter poem here..."
+                                required></textarea>
+                        </div>
+                        <div class="modal-footer">
+                            <button id='updateBtn' type="button" class="btn btn-success btn-sm" data-dismiss="modal">Submit</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="container">
+                <table class="table table-striped text-center">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Date</th>
+                            <th>Poem</th>
+                            <th>Update</th>
+                            <th>Delete</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </center>
+
+    <script>
+        var update = "<button id='update' class='btn btn-info'>Update</button>"
+        var Delete = "<button id='delete' class='btn btn-danger'>Delete</button>"
+        var id;
+        $(document).ready(function () {
+            title = $('#title');
+            currentDT = $('#currentDT').val(new Date($.now()).toDateString());
+            poem = $('#poem');
+
+            $('#submit').click(function (e) {
+                if (title.val() == "" || poem.val() == "") {
+                    console.log(title.val());
+                    console.log(poem.val());
+                    alert("Please check input!")
+                } else {
+                    e.preventDefault();
+                    $.ajax({
+                        url: '/title/create',
+                        type: 'PUT',
+                        dataType: 'JSON',
+                        data: { title: title.val(), currentDT: currentDT.val(), poem: poem.val() },
+                        error: function (err) {
+                            if (err.responseJSON._message == "Poem validation failed") {
+                                alert("Poem title must be unique!")
+                            } else {
+                                alert("Null invalid!")
+                            }
+                        },
+                        success: function (result) {
+                            var title = result;
+                            for (var i = 0; i < result.length; ++i) {
+                                $('tbody').append("<tr id = '" + result[i]._id + "'><td>" + result[i].title + "</td><td>" + result[i].currentDT + "</td><td>"
+                                    + result[i].poem + "</td><td>" + update + "</td><td>" + Delete + "</td></tr>")
+                            }
+                        }
+                    })
+                }
+                $('input').val('');
+            })
+        })
+
+        $(document).on('click', "#delete", (function () {
+            let ids = $(this).closest("tr").attr("id")
+            $.ajax({
+                url: '/title/delete',
+                type: 'Delete',
+                dataType: 'JSON',
+                data: { id: ids },
+                error: function (err) {
+                    alert(err)
+                },
+                success: function (result) {
+                    location.reload();
+                    $('#' + id).remove();
+                    alert(result.message)
+                }
+            })
+        }))
+
+        $(document).on('click', "#update", (function (e) {
+            e.preventDefault();
+            $("#updateContent").show();
+            id = $(this).closest('tr').attr("id");
+            $.ajax({
+                url: '/title/retrieve/' + id,
+                type: 'get',
+                success: function (result) {
+                    $('#updateTitle').val(result.title)
+                    $('#updateDT').val(result.currentDT)
+                    $('#updatePoem').val(result.poem)
+                },
+                error: function (e) {
+                    alert(e)
+                }
+            })
+        }))
+
+
+        $("#updateBtn").click(function () {
+            if ($('#updatePoem').val() < 4 && $('#updatePoem').val() > 0) {
+                $.ajax({
+                    url: '/title/update',
+                    type: "PUT",
+                    data: { id: id, title: $('#updateTitle').val(), currentDT: $('#updateDT').val(), poem: $('#updatePoem').val() },
+                    success: function (result) {
+                        $("#updateContent").hide();
+                        $("#" + id).remove();
+                        $('tbody').append("<tr id = '" + result._id + "'><td>" + result.title + "</td><td>" + result.currentDT + "</td><td>"
+                            + result.poem + "</td><td>" + update + "</td><td>" + Delete + "</td></tr>");
+
+                    },
+                    error: function (e) {
+                        $("#updateContent").hide();
+                        alert("Poem title already exist!")
+                    }
+
+                })
+            } else {
+                alert("Please check input!")
+            }
+        })
+
+        $.ajax({
+            url: 'title/retrieve/all',
+            type: 'GET',
+            success: function (result) {
+                result.data.forEach(title => {
+                    $('tbody').append("<tr id = '" + title._id + "'><td>" + title.title + "</td><td>" + title.currentDT + "</td><td>" + title.poem + "</td><td>" + update + "</td><td>" + Delete + "</td></tr>")
+                });
+            }
+        })
+
+
+    </script>
+</body>
+
+</html>
